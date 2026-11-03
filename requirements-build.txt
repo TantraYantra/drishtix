@@ -1,0 +1,2 @@
+# Install after requirements.txt in a clean 64-bit Windows Python environment.
+pyinstaller>=6.10

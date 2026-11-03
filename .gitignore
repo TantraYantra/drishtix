@@ -1,0 +1,14 @@
+.venv/
+.build-venv/
+build/
+dist/
+release/
+__pycache__/
+*.py[cod]
+*.db
+*.db-wal
+*.db-shm
+*.log
+data/
+.DS_Store
+.pytest_cache/

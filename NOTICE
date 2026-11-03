@@ -1,0 +1,46 @@
+# Third-party notices
+
+PeopleLens is built with open-source software. This file lists the runtime
+dependencies and their licenses. It is provided for attribution and does not
+relicense any component.
+
+## Runtime libraries
+
+| Component | License | Project |
+|---|---|---|
+| Python | PSF License | https://www.python.org |
+| Tcl/Tk | BSD-style | https://www.tcl.tk |
+| Pillow | HPND | https://python-pillow.org |
+| OpenCV (opencv-python) | Apache License 2.0 | https://opencv.org |
+| NumPy | BSD-3-Clause | https://numpy.org |
+| ONNX Runtime | MIT | https://onnxruntime.ai |
+| UniFace | MIT | https://github.com/yakhyo/uniface |
+| Requests | Apache License 2.0 | https://requests.readthedocs.io |
+| tqdm | MIT / MPL-2.0 | https://tqdm.github.io |
+| SciPy | BSD-3-Clause | https://scipy.org |
+| scikit-image | BSD-3-Clause | https://scikit-image.org |
+| SQLite | Public domain | https://sqlite.org |
+
+The application uses **PyInstaller** (GPL-2.0 with a special exception that
+permits distribution of bundled applications) only as a build tool.
+
+## AI model weights
+
+The face detection and recognition models are **not** part of this source
+repository and are **not** covered by the MIT License of this project.
+
+- Detection: RetinaFace (MobileNetV2) weights distributed by UniFace.
+- Recognition: AdaFace IR-18 weights distributed by the AdaFace ONNX project.
+
+PeopleLens downloads these files at install time or on first use and verifies
+their SHA-256 checksums. Review the upstream model terms before redistributing
+the weights yourself:
+
+- https://github.com/yakhyo/uniface
+- https://github.com/yakhyo/adaface-onnx
+- https://github.com/mk-minchul/AdaFace
+- https://github.com/deepinsight/insightface
+
+The model training datasets may carry terms that differ from the code license.
+This notice is not legal advice and is not a warranty of fitness for a
+particular jurisdiction or commercial use.
