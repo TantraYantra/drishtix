@@ -1,6 +1,6 @@
 # Third-party notices
 
-PeopleLens is built with open-source software. This file lists the runtime
+DrishtiX is built with open-source software. This file lists the runtime
 dependencies and their licenses. It is provided for attribution and does not
 relicense any component.
 
@@ -27,20 +27,38 @@ permits distribution of bundled applications) only as a build tool.
 ## AI model weights
 
 The face detection and recognition models are **not** part of this source
-repository and are **not** covered by the MIT License of this project.
+repository. DrishtiX downloads them at install time or on first use and verifies
+their SHA-256 checksums.
 
-- Detection: RetinaFace (MobileNetV2) weights distributed by UniFace.
-- Recognition: AdaFace IR-18 weights distributed by the AdaFace ONNX project.
+Both models are distributed under the MIT License:
 
-PeopleLens downloads these files at install time or on first use and verifies
-their SHA-256 checksums. Review the upstream model terms before redistributing
-the weights yourself:
+### RetinaFace (MobileNetV2) — face detection
 
-- https://github.com/yakhyo/uniface
-- https://github.com/yakhyo/adaface-onnx
-- https://github.com/mk-minchul/AdaFace
-- https://github.com/deepinsight/insightface
+- Copyright (c) 2024 Yakhyokhuja Valikhujaev
+- Source: https://github.com/yakhyo/retinaface-pytorch
+- Distributed by: https://github.com/yakhyo/uniface
+- License: MIT
 
-The model training datasets may carry terms that differ from the code license.
-This notice is not legal advice and is not a warranty of fitness for a
-particular jurisdiction or commercial use.
+### AdaFace IR-18 — face recognition
+
+- Copyright (c) 2022 Minchul Kim
+- Source: https://github.com/mk-minchul/AdaFace
+- ONNX export: https://github.com/yakhyo/adaface-onnx
+- Distributed by: https://github.com/yakhyo/uniface
+- License: MIT
+
+The MIT License permits use, copying, modification, and redistribution, and
+requires this copyright notice to travel with the software.
+
+### Training data
+
+The upstream authors trained these weights on research datasets (WIDER FACE
+for RetinaFace, WebFace260M/WebFace4M for AdaFace) whose own terms are limited
+to non-commercial research. The authors released the resulting **weights**
+under MIT and state no further restriction, and UniFace's licence page lists
+both as MIT. This notice records that provenance so downstream users can make
+their own judgement; it is not legal advice.
+
+If you need a stack with no dataset ambiguity, EdgeFace (BSD-3-Clause, Idiap
+Research Institute) and OpenCV YuNet (MIT) are drop-in alternatives.
+

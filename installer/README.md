@@ -1,35 +1,35 @@
 # Windows installer
 
-`PeopleLens.iss` builds the single-file, per-user installer published on the
+`DrishtiX.iss` builds the single-file, per-user installer published on the
 TantraYantra website.
 
 ## What it does
 
-- Installs to `%LOCALAPPDATA%\Programs\PeopleLens` without an admin prompt.
+- Installs to `%LOCALAPPDATA%\Programs\DrishtiX` without an admin prompt.
 - Adds a Start Menu entry and, by default, a Desktop shortcut.
-- Offers to launch PeopleLens when setup finishes.
+- Offers to launch DrishtiX when setup finishes.
 - Registers a normal uninstaller in **Settings -> Apps**.
 - Downloads the two AI models (about 104 MB) during setup and verifies their
   SHA-256 checksums, so the first face scan works immediately.
-- Leaves `%LOCALAPPDATA%\TantraYantra\PeopleLens` untouched on install, upgrade,
+- Leaves `%LOCALAPPDATA%\TantraYantra\DrishtiX` untouched on install, upgrade,
   and uninstall.
 
 ## Build
 
 ```powershell
 # 1. Build the application first.
-pyinstaller PeopleLens.spec --noconfirm
+pyinstaller DrishtiX.spec --noconfirm
 
 # 2. Compile the installer (Inno Setup 6.3 or newer).
-& "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe" installer\PeopleLens.iss
+& "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe" installer\DrishtiX.iss
 ```
 
-The result is `release\PeopleLens-Setup.exe`.
+The result is `release\DrishtiX-Setup.exe`.
 
 To package a different build:
 
 ```powershell
-ISCC.exe /DPayloadDir="C:\path\to\PeopleLens" installer\PeopleLens.iss
+ISCC.exe /DPayloadDir="C:\path\to\DrishtiX" installer\DrishtiX.iss
 ```
 
 ## Silent install
@@ -37,7 +37,7 @@ ISCC.exe /DPayloadDir="C:\path\to\PeopleLens" installer\PeopleLens.iss
 The installer supports winget and managed deployment:
 
 ```bat
-PeopleLens-Setup.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
+DrishtiX-Setup.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
 ```
 
 Silent mode still downloads and verifies the models. If the download fails, the
@@ -58,5 +58,5 @@ If an upstream release moves, update both the URL and the checksum together.
 ## Signing
 
 The installer is not signed yet. When a certificate is available, sign
-`PeopleLens.exe` before building and sign `PeopleLens-Setup.exe` after building,
+`DrishtiX.exe` before building and sign `DrishtiX-Setup.exe` after building,
 then timestamp both. Do not change the payload after signing.

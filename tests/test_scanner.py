@@ -49,7 +49,7 @@ def fake_faces(_image):
 
 
 def main() -> None:
-    temporary = tempfile.TemporaryDirectory(prefix="peoplelens-scan-")
+    temporary = tempfile.TemporaryDirectory(prefix="drishtix-scan-")
     original_db = db.DB_PATH
     original_backups = db.BACKUPS_DIR
     original_thumbs = thumbnails.THUMBNAILS_DIR
@@ -58,7 +58,7 @@ def main() -> None:
     original_extract = scanner.extract_faces
     try:
         root = Path(temporary.name)
-        db.DB_PATH = root / "peoplelens.db"
+        db.DB_PATH = root / "drishtix.db"
         db.BACKUPS_DIR = root / "backups"
         thumbnails.THUMBNAILS_DIR = root / "thumbnails"
         scanner.VIDEO_THUMBNAILS_DIR = root / "video_thumbnails"
@@ -192,7 +192,7 @@ def main() -> None:
             writer.release()
             print("Video codec unavailable; skipped the video sub-test.")
 
-        print("PeopleLens scanner integration tests passed.")
+        print("DrishtiX scanner integration tests passed.")
     finally:
         db.DB_PATH = original_db
         db.BACKUPS_DIR = original_backups

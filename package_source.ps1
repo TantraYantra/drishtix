@@ -3,7 +3,7 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $version = (Get-Content (Join-Path $root 'VERSION') -Raw).Trim()
 $releaseDir = Join-Path $root 'release'
-$zipPath = Join-Path $releaseDir ("PeopleLens-{0}-source.zip" -f $version)
+$zipPath = Join-Path $releaseDir ("DrishtiX-{0}-source.zip" -f $version)
 $stage = Join-Path $env:TEMP ("pl_source_" + [guid]::NewGuid().ToString('N'))
 
 New-Item -ItemType Directory -Force -Path $releaseDir | Out-Null
@@ -17,7 +17,7 @@ $files = @(
     'main.py',
     'package_source.bat',
     'package_source.ps1',
-    'PeopleLens.spec',
+    'DrishtiX.spec',
     'README.md',
     'requirements-build.txt',
     'requirements.txt',

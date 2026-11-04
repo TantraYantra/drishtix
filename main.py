@@ -1,10 +1,10 @@
-"""PeopleLens entry point.
+"""DrishtiX entry point.
 
 Startup order matters for a windowed Windows build:
 
 1. enable per-monitor DPI awareness before Tk creates a window,
 2. configure the rotating log file so no traceback is ever lost,
-3. show the approved PeopleLens splash,
+3. show the approved DrishtiX splash,
 4. launch the workspace and surface any startup failure in a real dialog.
 """
 from __future__ import annotations
@@ -20,7 +20,7 @@ from PIL import Image, ImageTk
 from app_paths import LOG_PATH, asset_path, ensure_user_data
 from core.logging_setup import configure_logging
 
-logger = logging.getLogger("peoplelens.main")
+logger = logging.getLogger("drishtix.main")
 
 
 def enable_dpi_awareness() -> None:
@@ -36,7 +36,7 @@ def enable_dpi_awareness() -> None:
 
 def _load_splash_image(width: int) -> ImageTk.PhotoImage | None:
     try:
-        with Image.open(asset_path("peoplelens_splash.png")) as opened:
+        with Image.open(asset_path("drishtix_splash.png")) as opened:
             image = opened.convert("RGB")
         ratio = width / image.width
         image = image.resize(
@@ -50,7 +50,7 @@ def _load_splash_image(width: int) -> ImageTk.PhotoImage | None:
 
 
 def show_splash(duration_ms: int = 1450) -> None:
-    """Show the approved PeopleLens splash, centred and scaled to fit."""
+    """Show the approved DrishtiX splash, centred and scaled to fit."""
     splash = tk.Tk()
     splash.overrideredirect(True)
     splash.configure(bg="#050914")
@@ -72,7 +72,7 @@ def show_splash(duration_ms: int = 1450) -> None:
         card.pack(fill="both", expand=True)
         tk.Label(
             card,
-            text="PeopleLens",
+            text="DrishtiX",
             bg="#0b1424",
             fg="#f2f6ff",
             font=("Segoe UI", 28, "bold"),
@@ -100,7 +100,7 @@ def _install_excepthook() -> None:
         )
         try:
             messagebox.showerror(
-                "PeopleLens could not start",
+                "DrishtiX could not start",
                 f"{exc_value}\n\nDetails were written to:\n{LOG_PATH}",
             )
         except Exception:
@@ -115,17 +115,17 @@ def main() -> None:
     _install_excepthook()
     try:
         ensure_user_data()
-        logger.info("PeopleLens starting")
+        logger.info("DrishtiX starting")
         show_splash()
-        from ui.app import PeopleLensApp
+        from ui.app import DrishtiXApp
 
-        app = PeopleLensApp()
+        app = DrishtiXApp()
         app.mainloop()
     except Exception:
-        logger.exception("PeopleLens failed to start")
+        logger.exception("DrishtiX failed to start")
         try:
             messagebox.showerror(
-                "PeopleLens could not start",
+                "DrishtiX could not start",
                 "The application could not open its window.\n\n"
                 f"Details were written to:\n{LOG_PATH}",
             )

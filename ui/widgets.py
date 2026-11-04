@@ -1,4 +1,4 @@
-"""Reusable, dependency-light widgets for the PeopleLens interface."""
+"""Reusable, dependency-light widgets for the DrishtiX interface."""
 from __future__ import annotations
 
 import tkinter as tk

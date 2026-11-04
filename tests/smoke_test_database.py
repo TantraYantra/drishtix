@@ -27,12 +27,12 @@ def embedding(seed: float) -> bytes:
 
 
 def main() -> None:
-    temporary = tempfile.TemporaryDirectory(prefix="peoplelens-db-")
+    temporary = tempfile.TemporaryDirectory(prefix="drishtix-db-")
     original_db = db.DB_PATH
     original_backups = db.BACKUPS_DIR
     try:
         root = Path(temporary.name)
-        db.DB_PATH = root / "peoplelens.db"
+        db.DB_PATH = root / "drishtix.db"
         db.BACKUPS_DIR = root / "backups"
         db.init_db()
 
@@ -129,7 +129,7 @@ def main() -> None:
         # Re-open the same file and confirm the video record persisted.
         reopened = db.all_photos(include_archived=True)
         assert [row["id"] for row in reopened] == [video_id]
-        print("PeopleLens database smoke tests passed.")
+        print("DrishtiX database smoke tests passed.")
     finally:
         db.DB_PATH = original_db
         db.BACKUPS_DIR = original_backups

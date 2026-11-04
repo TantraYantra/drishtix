@@ -1,8 +1,8 @@
-"""Centralised paths and small persistence helpers for PeopleLens.
+"""Centralised paths and small persistence helpers for DrishtiX.
 
 Installed application assets stay beside the executable (inside PyInstaller's
 bundle directory). Mutable user data lives under
-``%LOCALAPPDATA%\\TantraYantra\\PeopleLens`` on Windows so the app keeps working
+``%LOCALAPPDATA%\\TantraYantra\\DrishtiX`` on Windows so the app keeps working
 when it is installed somewhere read-only such as ``Program Files``.
 
 The functions in this module never delete user photos or overwrite an existing
@@ -19,10 +19,15 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-APP_NAME = "PeopleLens"
+APP_NAME = "DrishtiX"
 COMPANY_NAME = "TantraYantra"
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.1.0"
 APP_TAGLINE = "Your Photos. Your People. Your Memories."
+
+# The product shipped as "PeopleLens" up to 1.0.0. Its profile is copied once,
+# never moved or deleted, so an existing library survives the rename.
+LEGACY_APP_NAME = "PeopleLens"
+LEGACY_DB_NAME = "peoplelens.db"
 
 # Assets bundled with the application. In a PyInstaller onedir build this is
 # the ``_internal`` directory that contains the collected ``assets`` folder.
@@ -42,7 +47,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_user_data_dir() -> Path:
-    """Return the per-user writable data directory for PeopleLens."""
+    """Return the per-user writable data directory for DrishtiX."""
     if os.name == "nt":
         base = os.environ.get("LOCALAPPDATA")
         if base:
@@ -55,17 +60,61 @@ def get_user_data_dir() -> Path:
 
 USER_DATA_DIR = get_user_data_dir()
 SETTINGS_PATH = USER_DATA_DIR / "settings.json"
-DATABASE_PATH = USER_DATA_DIR / "peoplelens.db"
+DATABASE_PATH = USER_DATA_DIR / "drishtix.db"
 VIDEO_THUMBNAILS_DIR = USER_DATA_DIR / "video_thumbnails"
 THUMBNAILS_DIR = USER_DATA_DIR / "thumbnails"
 MODELS_DIR = USER_DATA_DIR / "models"
 BACKUPS_DIR = USER_DATA_DIR / "backups"
-LOG_PATH = USER_DATA_DIR / "peoplelens.log"
+LOG_PATH = USER_DATA_DIR / "drishtix.log"
 
 
 def asset_path(*parts: str) -> Path:
     """Resolve a bundled asset path without relying on the current directory."""
     return APP_DIR.joinpath("assets", *parts)
+
+
+def migrate_previous_profile() -> None:
+    """Copy the pre-rename ``PeopleLens`` profile into the DrishtiX folder once.
+
+    Only a copy is made: the previous folder stays exactly as it was, so a bad
+    migration can never destroy a user's library. The copy is skipped when this
+    profile already has a database, and a marker file prevents it running twice.
+    """
+    previous = USER_DATA_DIR.parent / LEGACY_APP_NAME
+    marker = USER_DATA_DIR / "migrated-from-peoplelens.txt"
+    if previous == USER_DATA_DIR or not previous.is_dir() or marker.exists():
+        return
+    if DATABASE_PATH.exists():
+        return
+
+    try:
+        shutil.copytree(
+            previous,
+            USER_DATA_DIR,
+            dirs_exist_ok=True,
+            ignore=shutil.ignore_patterns("*.log", "*.tmp"),
+        )
+    except OSError:
+        logger.warning("Could not copy the previous DrishtiX profile", exc_info=True)
+        return
+
+    legacy_db = USER_DATA_DIR / LEGACY_DB_NAME
+    if legacy_db.is_file() and not DATABASE_PATH.exists():
+        try:
+            legacy_db.replace(DATABASE_PATH)
+        except OSError:
+            logger.warning("Could not rename the migrated database", exc_info=True)
+
+    try:
+        marker.write_text(
+            f"Copied from {previous} on first start of {APP_NAME} {APP_VERSION}.\n"
+            "The previous folder was left unchanged and can be deleted once the "
+            "library opens correctly.\n",
+            encoding="utf-8",
+        )
+    except OSError:
+        pass
+    logger.info("Copied the previous profile from %s", previous)
 
 
 def ensure_user_data() -> Path:
@@ -74,6 +123,7 @@ def ensure_user_data() -> Path:
     A legacy file is copied only when its destination does not already exist.
     Existing user data is never overwritten.
     """
+    migrate_previous_profile()
     USER_DATA_DIR.mkdir(parents=True, exist_ok=True)
     for folder in (VIDEO_THUMBNAILS_DIR, THUMBNAILS_DIR, MODELS_DIR, BACKUPS_DIR):
         try:
@@ -83,7 +133,7 @@ def ensure_user_data() -> Path:
 
     legacy_dir = APP_DIR / "data"
     if legacy_dir.is_dir() and legacy_dir != USER_DATA_DIR:
-        for name in ("settings.json", "peoplelens.db"):
+        for name in ("settings.json", "drishtix.db"):
             source = legacy_dir / name
             destination = USER_DATA_DIR / name
             if source.is_file() and not destination.exists():

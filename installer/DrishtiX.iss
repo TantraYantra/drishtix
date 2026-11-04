@@ -1,28 +1,28 @@
-; PeopleLens - single-file Windows installer.
+; DrishtiX - single-file Windows installer.
 ;
 ; Design goals:
 ;   * one download, one double-click, no ZIP and no admin prompt;
-;   * per-user install under %LOCALAPPDATA%\Programs\PeopleLens;
+;   * per-user install under %LOCALAPPDATA%\Programs\DrishtiX;
 ;   * Start Menu entry, optional Desktop shortcut, launch when finished;
 ;   * pre-fetch the two AI models so the first face scan works immediately;
-;   * never touch %LOCALAPPDATA%\TantraYantra\PeopleLens on install or uninstall.
+;   * never touch %LOCALAPPDATA%\TantraYantra\DrishtiX on install or uninstall.
 
-#define MyAppName "PeopleLens"
-#define MyAppVersion "1.0.0"
+#define MyAppName "DrishtiX"
+#define MyAppVersion "1.1.0"
 #define MyAppPublisher "TantraYantra"
 #define MyAppURL "https://tantrayantra.github.io/tantrayantra-website/"
-#define MyAppExeName "PeopleLens.exe"
+#define MyAppExeName "DrishtiX.exe"
 
-; CI builds use ..\dist\PeopleLens. Local builds can override with
-;   ISCC.exe /DPayloadDir="C:\path\to\built\PeopleLens" installer\PeopleLens.iss
+; CI builds use ..\dist\DrishtiX. Local builds can override with
+;   ISCC.exe /DPayloadDir="C:\path\to\built\DrishtiX" installer\DrishtiX.iss
 #ifndef PayloadDir
-  #define PayloadDir "..\dist\PeopleLens"
+  #define PayloadDir "..\dist\DrishtiX"
 #endif
 
 ; Overridable so the interactive model-download page can be tested against a
 ; temporary folder. Production builds keep the real per-user location.
 #ifndef ModelsRoot
-  #define ModelsRoot "{localappdata}\TantraYantra\PeopleLens\models"
+  #define ModelsRoot "{localappdata}\TantraYantra\DrishtiX\models"
 #endif
 
 [Setup]
@@ -34,7 +34,7 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
-VersionInfoVersion=1.0.0.0
+VersionInfoVersion=1.1.0.0
 VersionInfoCompany={#MyAppPublisher}
 VersionInfoDescription={#MyAppName} Setup
 VersionInfoProductName={#MyAppName}
@@ -52,8 +52,8 @@ ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0
 
 OutputDir=..\release
-OutputBaseFilename=PeopleLens-Setup
-SetupIconFile=..\assets\peoplelens_logo.ico
+OutputBaseFilename=DrishtiX-Setup
+SetupIconFile=..\assets\drishtix_logo.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
 UninstallDisplayName={#MyAppName}
 
@@ -63,7 +63,9 @@ LZMAUseSeparateProcess=yes
 CloseApplications=yes
 CloseApplicationsFilter=*.exe
 RestartApplications=no
-UsePreviousAppDir=yes
+; The 1.0.0 build was called PeopleLens and lived in a different folder, so do
+; not inherit that install path. The uninstall entry (same AppId) is reused.
+UsePreviousAppDir=no
 SetupLogging=yes
 
 WizardStyle=modern
@@ -149,7 +151,7 @@ begin
 
   DownloadPage := CreateDownloadPage(
     'Local AI models',
-    'PeopleLens needs two face-recognition models (about 104 MB).' + #13#10 +
+    'DrishtiX needs two face-recognition models (about 104 MB).' + #13#10 +
     'They are downloaded once and stay on this PC. No photos are uploaded.',
     @OnDownloadProgress);
   DownloadPage.ShowBaseNameInsteadOfUrl := True;
@@ -182,7 +184,7 @@ begin
     except
       if MsgBox(
         'The AI models could not be downloaded.' + #13#10#13#10 +
-        'PeopleLens will still install, and it will try again the first time ' +
+        'DrishtiX will still install, and it will try again the first time ' +
         'you use face recognition.' + #13#10#13#10 +
         'Continue with the installation?',
         mbError, MB_YESNO) = IDNO then

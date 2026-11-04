@@ -1,10 +1,10 @@
-# PeopleLens 1.0.0
+# DrishtiX 1.1.0
 
 **Your Photos. Your People. Your Memories.**
 
-[**Download for Windows**](https://github.com/TantraYantra/peoplelens/releases/latest/download/PeopleLens-Setup.exe) · [Website](https://tantrayantra.github.io/tantrayantra-website/) · [Releases](https://github.com/TantraYantra/peoplelens/releases) · [MIT licensed](LICENSE)
+[**Download for Windows**](https://github.com/TantraYantra/drishtix/releases/latest/download/DrishtiX-Setup.exe) · [Website](https://tantrayantra.github.io/tantrayantra-website/) · [Releases](https://github.com/TantraYantra/drishtix/releases) · [MIT licensed](LICENSE)
 
-PeopleLens is a local-first Windows desktop photo library with on-device face
+DrishtiX is a local-first Windows desktop photo library with on-device face
 detection and recognition. It indexes photos and videos already on your PC,
 builds a searchable library, and helps you group faces into named people.
 Original media stays in its existing folders and is never uploaded.
@@ -15,16 +15,16 @@ A product by **TantraYantra**.
 
 ## Install
 
-1. Download **`PeopleLens-Setup.exe`** using the link above.
+1. Download **`DrishtiX-Setup.exe`** using the link above.
 2. Run it. No administrator password is required.
-3. When setup finishes, PeopleLens opens from the Start Menu or the Desktop
+3. When setup finishes, DrishtiX opens from the Start Menu or the Desktop
    shortcut.
 
 One file installs everything. Setup also downloads the two AI models (about
 104 MB) and verifies their checksums, so the first face scan works immediately.
 Photos are indexed from folders you already have; nothing is uploaded.
 
-> Windows SmartScreen may warn because the 1.0.0 installer is not code-signed
+> Windows SmartScreen may warn because the 1.1.0 installer is not code-signed
 > yet. Choose **More info → Run anyway** to continue. Every release also ships
 > `SHA256SUMS.txt` for verification.
 
@@ -79,7 +79,7 @@ download.
 ## Platform and requirements
 
 - **Windows 11 x64** is the supported release target. Windows 10 22H2 may work
-  but is not supported for 1.0.0.
+  but is not supported for 1.1.0.
 - **Python 3.11.x 64-bit** is required for source runs and release builds.
   The release was built and tested with **Python 3.11.9**.
 - The installer downloads the RetinaFace and AdaFace model weights (about
@@ -109,7 +109,7 @@ needed, installs the runtime requirements, and starts the app.
 The first AI initialization downloads the models into:
 
 ```text
-%LOCALAPPDATA%\TantraYantra\PeopleLens\models
+%LOCALAPPDATA%\TantraYantra\DrishtiX\models
 ```
 
 ---
@@ -164,23 +164,23 @@ The script:
 3. Installs pinned runtime requirements and PyInstaller.
 4. Verifies OpenCV, NumPy, Pillow, ONNX Runtime, and UniFace imports.
 5. Runs the three isolated test scripts.
-6. Cleans `build` and `dist\PeopleLens`.
+6. Cleans `build` and `dist\DrishtiX`.
 7. Builds the PyInstaller one-folder application.
-8. Creates `release\PeopleLens-1.0.0-windows11-x64.zip`.
+8. Creates `release\DrishtiX-1.1.0-windows11-x64.zip`.
 
 ### Outputs
 
 ```text
-dist\PeopleLens\PeopleLens.exe
-release\PeopleLens-1.0.0-windows11-x64.zip
-release\PeopleLens-Setup.exe              (after compiling the installer)
-release\PeopleLens-1.0.0-source.zip       (after package_source.bat)
+dist\DrishtiX\DrishtiX.exe
+release\DrishtiX-1.1.0-windows11-x64.zip
+release\DrishtiX-Setup.exe              (after compiling the installer)
+release\DrishtiX-1.1.0-source.zip       (after package_source.bat)
 ```
 
 Compile the single-file installer after the app build:
 
 ```bat
-"%LOCALAPPDATA%\Programs\Inno Setup 6\ISCC.exe" installer\PeopleLens.iss
+"%LOCALAPPDATA%\Programs\Inno Setup 6\ISCC.exe" installer\DrishtiX.iss
 ```
 
 The installer is per-user and does not need administrator rights. See
@@ -202,25 +202,25 @@ troubleshooting.
 
 ## Application data and privacy
 
-PeopleLens separates bundled application files from mutable user data.
+DrishtiX separates bundled application files from mutable user data.
 
 - Installed assets live beside the executable inside `_internal\assets`.
 - User data lives under:
 
 ```text
-%LOCALAPPDATA%\TantraYantra\PeopleLens
+%LOCALAPPDATA%\TantraYantra\DrishtiX
 ```
 
 Contents include:
 
 ```text
-peoplelens.db        library database
+drishtix.db        library database
 settings.json        appearance and recognition settings
 thumbnails\          cached photo thumbnails
 video_thumbnails\    cached video first frames
 models\              downloaded ONNX face models
 backups\             pre-migration database backups
-peoplelens.log       rotating diagnostic log
+drishtix.log       rotating diagnostic log
 ```
 
 - Original photos and videos are not copied into the application folder.
@@ -228,24 +228,24 @@ peoplelens.log       rotating diagnostic log
 - Nothing is uploaded to TantraYantra as part of normal library, recognition, or
   search workflows.
 - A database migration creates a backup before changing the schema.
-- Legacy project-local `data\peoplelens.db`, `data\settings.json`, and video
+- Legacy project-local `data\drishtix.db`, `data\settings.json`, and video
   thumbnails are copied into the new location only when the destination file
   does not already exist. Existing user data is never overwritten.
 - Release archives exclude databases, settings, logs, thumbnails, model caches,
   and developer paths.
 
-To move or back up a library, close PeopleLens and copy the entire
-`%LOCALAPPDATA%\TantraYantra\PeopleLens` folder.
+To move or back up a library, close DrishtiX and copy the entire
+`%LOCALAPPDATA%\TantraYantra\DrishtiX` folder.
 
 ---
 
 ## Upgrading an existing library
 
-1. Close PeopleLens.
-2. Back up `%LOCALAPPDATA%\TantraYantra\PeopleLens`.
+1. Close DrishtiX.
+2. Back up `%LOCALAPPDATA%\TantraYantra\DrishtiX`.
 3. Replace the application folder with the new build. Do not replace or delete
    your user-data folder.
-4. Start PeopleLens. Schema changes are applied automatically with a safety
+4. Start DrishtiX. Schema changes are applied automatically with a safety
    backup.
 5. If the library predates the current AdaFace embedding format, open
    **Settings → Rebuild AI face index** and review the results.
@@ -278,7 +278,7 @@ sufficiently. Uncertain mappings remain unassigned for review.
 - Video playback depends on the codecs available in the bundled OpenCV build.
   Indexing and first-frame thumbnails may still work when playback does not.
 - Trash is a reversible in-app state and does not remove files from disk.
-- PeopleLens 1.0.0 does not edit images, create memory movies, detect duplicates,
+- DrishtiX 1.1.0 does not edit images, create memory movies, detect duplicates,
   or provide cloud sync.
 - The executable is not code-signed. Windows SmartScreen may show a warning on
   first launch until a signed installer is produced.
@@ -319,13 +319,13 @@ ui/
   app.py                application shell and all pages
   theme.py              Dark, Light, and Ocean palettes and ttk styles
   widgets.py            paged photo grid, async images, cards, search box
-assets/                 official PeopleLens logos, icons, and approved splash
+assets/                 official DrishtiX logos, icons, and approved splash
 tests/                  isolated database, scanner, and UI smoke tests
-PeopleLens.spec         PyInstaller one-folder build definition
+DrishtiX.spec         PyInstaller one-folder build definition
 build_windows11.bat     clean build + tests + release ZIP
 package_source.bat      clean source ZIP
 version_info.txt        Windows executable version metadata
-VERSION                 application version (1.0.0)
+VERSION                 application version (1.1.0)
 ```
 
 ---
@@ -333,11 +333,11 @@ VERSION                 application version (1.0.0)
 ## Troubleshooting
 
 **The app does not start.** Open
-`%LOCALAPPDATA%\TantraYantra\PeopleLens\peoplelens.log` for the traceback. A
+`%LOCALAPPDATA%\TantraYantra\DrishtiX\drishtix.log` for the traceback. A
 startup error dialog also points to this file.
 
 **Model download fails.** Check internet access, then retry face recognition.
-The cache is under `%LOCALAPPDATA%\TantraYantra\PeopleLens\models`. Delete the
+The cache is under `%LOCALAPPDATA%\TantraYantra\DrishtiX\models`. Delete the
 cache only if you want to force a fresh download.
 
 **A video will not play.** The codec may not be supported by the bundled OpenCV
@@ -357,7 +357,7 @@ launches and face recognition works before publishing.
 ## License
 
 The source code is released under the [MIT License](LICENSE). The TantraYantra
-and PeopleLens names, logos, and icons are brand assets and are not covered by
+and DrishtiX names, logos, and icons are brand assets and are not covered by
 the MIT License; see [TRADEMARK.md](TRADEMARK.md).
 
 Third-party components and AI model terms are listed in [NOTICE](NOTICE). The
@@ -368,6 +368,6 @@ are downloaded from their upstream projects and verified by SHA-256.
 
 ## Attribution
 
-PeopleLens is a product by **TantraYantra**.
+DrishtiX is a product by **TantraYantra**.
 
 Built with Python, Tk/ttk, Pillow, OpenCV, SQLite, ONNX Runtime, and UniFace.

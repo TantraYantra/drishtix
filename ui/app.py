@@ -1,4 +1,4 @@
-"""PeopleLens desktop workspace.
+"""DrishtiX desktop workspace.
 
 A local-first photo library for Windows 11. The interface is built with Tk/ttk
 and deliberately keeps one scroll surface per page, background thumbnail
@@ -53,7 +53,7 @@ from ui.widgets import (
     truncate,
 )
 
-logger = logging.getLogger("peoplelens.ui")
+logger = logging.getLogger("drishtix.ui")
 
 
 def enable_dpi_awareness() -> None:
@@ -76,7 +76,7 @@ class NavItem(tk.Frame):
         icon: str,
         label: str,
         command: Callable,
-        app: "PeopleLensApp",
+        app: "DrishtiXApp",
     ) -> None:
         super().__init__(parent, bg=app.sidebar_bg, cursor="hand2")
         self.app = app
@@ -140,7 +140,7 @@ class NavItem(tk.Frame):
             self.text.configure(font=self.app.fonts.text(9))
 
 
-class PeopleLensApp(tk.Tk):
+class DrishtiXApp(tk.Tk):
     def __init__(self) -> None:
         enable_dpi_awareness()
         super().__init__()
@@ -158,7 +158,7 @@ class PeopleLensApp(tk.Tk):
         self.nav_active_bg = "#131f35" if self.theme.name != "Ocean" else "#0f2c40"
 
         apply_ttk_styles(self, self.theme, self.fonts)
-        self.title("PeopleLens — Your Photos. Your People. Your Memories.")
+        self.title("DrishtiX — Your Photos. Your People. Your Memories.")
         self.configure(bg=self.theme.bg)
         self.minsize(1100, 720)
         self._center_window(1520, 940)
@@ -170,7 +170,7 @@ class PeopleLensApp(tk.Tk):
         except Exception as exc:
             logger.exception("Database initialization failed")
             messagebox.showerror(
-                "PeopleLens could not open its library",
+                "DrishtiX could not open its library",
                 "The local library database could not be opened.\n\n"
                 f"Location:\n{db.DB_PATH}\n\n"
                 f"Details: {exc}\n\n"
@@ -219,7 +219,7 @@ class PeopleLensApp(tk.Tk):
             self.geometry("1520x940")
 
     def _set_icon(self) -> None:
-        icon = asset_path("peoplelens_logo.ico")
+        icon = asset_path("drishtix_logo.ico")
         try:
             if icon.is_file():
                 self.iconbitmap(str(icon))
@@ -285,7 +285,7 @@ class PeopleLensApp(tk.Tk):
     def _build_sidebar(self) -> None:
         brand = tk.Frame(self.sidebar, bg=self.sidebar_bg)
         brand.pack(fill="x", padx=18, pady=(20, 18))
-        icon_path = asset_path("peoplelens_icon.png")
+        icon_path = asset_path("drishtix_icon.png")
         try:
             with Image.open(icon_path) as logo:
                 logo = logo.convert("RGBA")
@@ -303,7 +303,7 @@ class PeopleLensApp(tk.Tk):
         namebox.pack(side="left", padx=(10, 0), fill="x", expand=True)
         tk.Label(
             namebox,
-            text="PEOPLELENS",
+            text="DRISHTIX",
             bg=self.sidebar_bg,
             fg=self.theme.text,
             font=self.fonts.display(12, "bold"),
@@ -741,7 +741,7 @@ class PeopleLensApp(tk.Tk):
         self._set_status(f"Task failed: {exc}", self.theme.red)
         logger.exception("Task %s failed", kind)
         messagebox.showerror(
-            "PeopleLens could not finish that task",
+            "DrishtiX could not finish that task",
             f"{exc}\n\nDetails were written to:\n{LOG_PATH}",
         )
 
@@ -811,7 +811,7 @@ class PeopleLensApp(tk.Tk):
         hero_left.pack(side="left", fill="both", expand=True)
         tk.Label(
             hero_left,
-            text="THE PEOPLELENS WORKSPACE",
+            text="THE DRISHTIX WORKSPACE",
             bg=self.theme.panel,
             fg=self.theme.accent,
             font=self.fonts.text(7, "bold"),
@@ -830,7 +830,7 @@ class PeopleLensApp(tk.Tk):
             "Explore, organise and recognise the people in your photo universe. "
             "Everything is indexed and searched on this device."
             if stats["photos"]
-            else "Choose a folder and PeopleLens will index your photos and videos locally. "
+            else "Choose a folder and DrishtiX will index your photos and videos locally. "
             "Face recognition is optional and never uploads your library."
         )
         tk.Label(
@@ -1194,7 +1194,7 @@ class PeopleLensApp(tk.Tk):
         def delete_item(photo_id: int):
             if messagebox.askyesno(
                 "Delete from library",
-                "Remove this item from the PeopleLens library permanently?\n\n"
+                "Remove this item from the DrishtiX library permanently?\n\n"
                 "The original file on disk will NOT be deleted.",
             ):
                 db.permanently_delete_photo(photo_id)
@@ -1224,7 +1224,7 @@ class PeopleLensApp(tk.Tk):
                         self.fonts,
                         "\uE91B",
                         "Your library is ready for its first folder.",
-                        "Scan a folder of photos or videos. PeopleLens indexes it on this device, "
+                        "Scan a folder of photos or videos. DrishtiX indexes it on this device, "
                         "builds previews, and keeps your original files exactly where they are.",
                         "+  Scan a folder",
                         self.start_scan,
@@ -2453,7 +2453,7 @@ class PeopleLensApp(tk.Tk):
         ).pack(anchor="w", pady=(6, 4))
         tk.Label(
             appearance_inner,
-            text="Theme changes take effect after restarting PeopleLens.",
+            text="Theme changes take effect after restarting DrishtiX.",
             bg=self.theme.panel,
             fg=self.theme.muted,
             font=self.fonts.text(8),
@@ -2592,7 +2592,7 @@ class PeopleLensApp(tk.Tk):
                 self.settings = cfg
                 messagebox.showinfo(
                     "Settings saved",
-                    "Recognition settings saved. Restart PeopleLens to apply a theme change.",
+                    "Recognition settings saved. Restart DrishtiX to apply a theme change.",
                 )
             except Exception as exc:
                 messagebox.showerror("Could not save settings", str(exc))
@@ -2634,11 +2634,11 @@ class PeopleLensApp(tk.Tk):
     # ----------------------------------------------------------------- about
 
     def show_about(self) -> None:
-        self.clear("About PeopleLens", "A local-first product from TantraYantra.")
+        self.clear("About DrishtiX", "A local-first product from TantraYantra.")
         card, inner = self._panel(self.content, padx=28, pady=26)
         card.pack(fill="x", pady=(0, 14))
         try:
-            with Image.open(asset_path("peoplelens_icon.png")) as logo:
+            with Image.open(asset_path("drishtix_icon.png")) as logo:
                 logo = logo.convert("RGBA")
                 logo.thumbnail((86, 86), Image.Resampling.LANCZOS)
                 self.about_logo = ImageTk.PhotoImage(logo)
@@ -2646,7 +2646,7 @@ class PeopleLensApp(tk.Tk):
         except Exception:
             logger.debug("About logo could not be loaded", exc_info=True)
         tk.Label(
-            inner, text="PeopleLens", bg=self.theme.panel, fg=self.theme.text,
+            inner, text="DrishtiX", bg=self.theme.panel, fg=self.theme.text,
             font=self.fonts.display(24, "bold"), anchor="w"
         ).pack(anchor="w", pady=(10, 2))
         tk.Label(
@@ -2661,7 +2661,7 @@ class PeopleLensApp(tk.Tk):
         ).pack(anchor="w", pady=(8, 0))
         tk.Label(
             inner,
-            text="A product by TantraYantra  ·  Powered by TantraYantra",
+            text="A product by TantraYantra  ·  Open source under the MIT License",
             bg=self.theme.panel,
             fg=self.theme.cyan,
             font=self.fonts.text(9, "bold"),
@@ -2686,11 +2686,21 @@ class PeopleLensApp(tk.Tk):
             self.fonts,
             "ghost",
         ).pack(side="left", padx=(8, 0))
+        make_button(
+            links,
+            "Licenses",
+            lambda: webbrowser.open(
+                "https://github.com/TantraYantra/drishtix/blob/main/NOTICE"
+            ),
+            self.theme,
+            self.fonts,
+            "ghost",
+        ).pack(side="left", padx=(8, 0))
 
         sections = [
             (
                 "Built local-first",
-                "Your original photos and videos stay in their existing folders. PeopleLens stores a "
+                "Your original photos and videos stay in their existing folders. DrishtiX stores a "
                 "local library index, albums, thumbnails and face-recognition data on this computer. "
                 "AI inference runs locally after its models have been downloaded.",
             ),
@@ -2703,6 +2713,13 @@ class PeopleLensApp(tk.Tk):
             (
                 "Data location",
                 f"{USER_DATA_DIR}\nDatabase: {db.DB_PATH}\nLog: {LOG_PATH}",
+            ),
+            (
+                "AI models and licenses",
+                "RetinaFace (MobileNetV2) face detection, MIT, \u00a9 2024 Yakhyokhuja "
+                "Valikhujaev. AdaFace IR-18 face recognition, MIT, \u00a9 2022 Minchul "
+                "Kim. Both are distributed by the UniFace project. The full third-party "
+                "notices ship with the application as NOTICE.",
             ),
         ]
         for title, body in sections:
@@ -2734,7 +2751,7 @@ class PeopleLensApp(tk.Tk):
             if messagebox.askyesno(
                 "File not found",
                 f"The original file is no longer at:\n{path}\n\n"
-                "Remove this record from the PeopleLens library? The original was not modified.",
+                "Remove this record from the DrishtiX library? The original was not modified.",
             ):
                 if photo.get("id"):
                     db.permanently_delete_photo(int(photo["id"]))
@@ -2983,7 +3000,7 @@ class PeopleLensApp(tk.Tk):
     def _trash_from_viewer(self, photo_id: int, window: tk.Toplevel) -> None:
         if messagebox.askyesno(
             "Move to trash",
-            "Move this item to PeopleLens Trash? You can restore it later. "
+            "Move this item to DrishtiX Trash? You can restore it later. "
             "The original file stays on disk.",
         ):
             db.move_to_trash(photo_id)
@@ -2998,7 +3015,7 @@ class PeopleLensApp(tk.Tk):
     def _delete_index_from_viewer(self, photo_id: int, window: tk.Toplevel) -> None:
         if messagebox.askyesno(
             "Delete from library",
-            "Remove this item from the PeopleLens library permanently? "
+            "Remove this item from the DrishtiX library permanently? "
             "The original file on disk will NOT be deleted.",
         ):
             db.permanently_delete_photo(photo_id)
@@ -3140,7 +3157,7 @@ class PeopleLensApp(tk.Tk):
         if self._task_active:
             if not messagebox.askyesno(
                 "Task in progress",
-                "A library task is still running. Cancel it and close PeopleLens?",
+                "A library task is still running. Cancel it and close DrishtiX?",
             ):
                 return
             self._cancel_requested = True
@@ -3157,7 +3174,7 @@ class PeopleLensApp(tk.Tk):
         self._showing_error = True
         try:
             messagebox.showerror(
-                "PeopleLens encountered an error",
+                "DrishtiX encountered an error",
                 f"{value}\n\nDetails were written to:\n{LOG_PATH}",
             )
         finally:
@@ -3165,4 +3182,4 @@ class PeopleLensApp(tk.Tk):
 
 
 if __name__ == "__main__":
-    PeopleLensApp().mainloop()
+    DrishtiXApp().mainloop()

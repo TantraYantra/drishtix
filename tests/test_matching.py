@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-TEMP_ROOT = Path(tempfile.mkdtemp(prefix="peoplelens-match-"))
+TEMP_ROOT = Path(tempfile.mkdtemp(prefix="drishtix-match-"))
 os.environ["LOCALAPPDATA"] = str(TEMP_ROOT)
 
 import numpy as np  # noqa: E402
@@ -116,7 +116,7 @@ def main() -> None:
     assert owner == ana, owner
     assert not db.pending_candidates(), "bulk confirmation must clear the queue"
 
-    print("PeopleLens matching tests passed.")
+    print("DrishtiX matching tests passed.")
 
 
 if __name__ == "__main__":

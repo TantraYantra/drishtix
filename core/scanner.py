@@ -1,4 +1,4 @@
-"""Local folder scanner for PeopleLens.
+"""Local folder scanner for DrishtiX.
 
 The scanner deliberately persists each media record *before* running optional
 face recognition. A missing model, an offline machine, or an inference error can
@@ -197,7 +197,7 @@ def scan_folder(
                     width, height, duration, thumb_path, video_error = _video_metadata(path, digest)
                     if video_error:
                         errors += 1
-                        logger.warning("[PeopleLens scan] %s: %s", path, video_error)
+                        logger.warning("[DrishtiX scan] %s: %s", path, video_error)
                         progress(index, total, path.name, seen, face_count, skipped, errors)
                         continue
                 else:
@@ -205,7 +205,7 @@ def scan_folder(
                     image_bgr, pil_image = _read_image(path, raw)
                     if image_bgr is None or pil_image is None:
                         errors += 1
-                        logger.warning("[PeopleLens scan] Could not decode image: %s", path)
+                        logger.warning("[DrishtiX scan] Could not decode image: %s", path)
                         progress(index, total, path.name, seen, face_count, skipped, errors)
                         continue
                     height, width = image_bgr.shape[:2]
@@ -243,12 +243,12 @@ def scan_folder(
                                 "Face recognition is unavailable for this scan. Your photos "
                                 "were still indexed. Details: " + str(exc)
                             )
-                            logger.warning("[PeopleLens AI unavailable] %s", exc)
+                            logger.warning("[DrishtiX AI unavailable] %s", exc)
                         except Exception as exc:
                             ai_tried = True
                             errors += 1
                             logger.warning(
-                                "[PeopleLens face detection] %s: %s", path, exc, exc_info=True
+                                "[DrishtiX face detection] %s: %s", path, exc, exc_info=True
                             )
                     for box, embedding, det_score in found_faces:
                         try:
@@ -258,7 +258,7 @@ def scan_folder(
                         except Exception as exc:
                             errors += 1
                             logger.warning(
-                                "[PeopleLens face processing] %s: %s", path, exc, exc_info=True
+                                "[DrishtiX face processing] %s: %s", path, exc, exc_info=True
                             )
                     if found_faces:
                         db.set_photo_category(photo_id, "People")
@@ -269,7 +269,7 @@ def scan_folder(
             except Exception as exc:
                 errors += 1
                 logger.warning(
-                    "[PeopleLens scan error] %s: %s", path, exc, exc_info=True
+                    "[DrishtiX scan error] %s: %s", path, exc, exc_info=True
                 )
             progress(index, total, path.name, seen, face_count, skipped, errors)
     except ScanCancelled:
@@ -356,7 +356,7 @@ def reindex_existing(
                 except Exception as exc:
                     ai_enabled = False
                     ai_warning = f"Face recognition is unavailable: {exc}"
-                    logger.warning("[PeopleLens reindex] AI unavailable: %s", exc)
+                    logger.warning("[DrishtiX reindex] AI unavailable: %s", exc)
                     break
             db.delete_faces_for_photo(row["id"])
             restored: set[int] = set()
@@ -383,7 +383,7 @@ def reindex_existing(
             done += 1
         except Exception as exc:
             errors += 1
-            logger.warning("[PeopleLens reindex] %s: %s", row["path"], exc, exc_info=True)
+            logger.warning("[DrishtiX reindex] %s: %s", row["path"], exc, exc_info=True)
         if progress:
             progress(index, total, row["path"], done, faces, 0, errors)
 
@@ -396,7 +396,7 @@ def reindex_existing(
                 except Exception as exc:
                     errors += 1
                     logger.warning(
-                        "[PeopleLens matching] face %s: %s", face_id, exc, exc_info=True
+                        "[DrishtiX matching] face %s: %s", face_id, exc, exc_info=True
                     )
     return {
         "seen": done,

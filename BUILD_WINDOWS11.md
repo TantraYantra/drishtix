@@ -1,4 +1,4 @@
-# PeopleLens 1.0.0 - Windows 11 x64 build notes
+# DrishtiX 1.1.0 - Windows 11 x64 build notes
 
 ## Release target
 
@@ -41,17 +41,17 @@ The script performs a clean, repeatable build:
    python tests\test_scanner.py
    python tests\test_ui_smoke.py
    ```
-6. Removes the previous `build` and `dist\PeopleLens` directories.
-7. Builds with `python -m PyInstaller --noconfirm --clean PeopleLens.spec`.
-8. Creates `release\PeopleLens-1.0.0-windows11-x64.zip` from
-   `dist\PeopleLens\*`.
+6. Removes the previous `build` and `dist\DrishtiX` directories.
+7. Builds with `python -m PyInstaller --noconfirm --clean DrishtiX.spec`.
+8. Creates `release\DrishtiX-1.1.0-windows11-x64.zip` from
+   `dist\DrishtiX\*`.
 
 ### Outputs
 
 ```text
-dist\PeopleLens\PeopleLens.exe
-dist\PeopleLens\_internal\
-release\PeopleLens-1.0.0-windows11-x64.zip
+dist\DrishtiX\DrishtiX.exe
+dist\DrishtiX\_internal\
+release\DrishtiX-1.1.0-windows11-x64.zip
 ```
 
 ### Source archive
@@ -65,7 +65,7 @@ package_source.bat
 Output:
 
 ```text
-release\PeopleLens-1.0.0-source.zip
+release\DrishtiX-1.1.0-source.zip
 ```
 
 The source archive includes application source, UI, assets, tests, build files,
@@ -79,11 +79,11 @@ and documentation. It excludes:
 
 ## What the spec bundles
 
-`PeopleLens.spec`:
+`DrishtiX.spec`:
 
-- builds a windowed (`console=False`) `PeopleLens.exe`;
-- uses `assets/peoplelens_logo.ico` as the executable icon;
-- applies `version_info.txt` (version 1.0.0.0, company TantraYantra);
+- builds a windowed (`console=False`) `DrishtiX.exe`;
+- uses `assets/drishtix_logo.ico` as the executable icon;
+- applies `version_info.txt` (version 1.1.0.0, company TantraYantra);
 - collects UniFace, ONNX Runtime, OpenCV, Pillow, and NumPy packages;
 - bundles `assets\` and `VERSION` inside `_internal`;
 - excludes PyTorch, TorchVision, FAISS, and pytest.
@@ -106,17 +106,17 @@ Before publishing a new version:
 
 ## Model files
 
-UniFace manages the RetinaFace and AdaFace downloads. PeopleLens sets
+UniFace manages the RetinaFace and AdaFace downloads. DrishtiX sets
 `UNIFACE_CACHE_DIR` to:
 
 ```text
-%LOCALAPPDATA%\TantraYantra\PeopleLens\models
+%LOCALAPPDATA%\TantraYantra\DrishtiX\models
 ```
 
 The first model initialization requires internet access. Later inference is
 local. Model files are not included in the source or release archives.
 
-## Automated verification completed for 1.0.0
+## Automated verification completed for 1.1.0
 
 The following checks passed with Python 3.11.9 on Windows 11 x64:
 
@@ -128,13 +128,13 @@ The following checks passed with Python 3.11.9 on Windows 11 x64:
   thumbnails load; no Tk callback errors.
 - Packaged executable launched with an isolated `LOCALAPPDATA`.
 - Splash appeared and the main window opened with the expected title.
-- `peoplelens.db` was created under
-  `%LOCALAPPDATA%\TantraYantra\PeopleLens`.
+- `drishtix.db` was created under
+  `%LOCALAPPDATA%\TantraYantra\DrishtiX`.
 - Log contained a clean startup record and no traceback.
 - Window closed normally and the process exited.
-- Release ZIP contained only `PeopleLens.exe` and `_internal\*`; no development
+- Release ZIP contained only `DrishtiX.exe` and `_internal\*`; no development
   database, settings, logs, virtual environments, or build output.
-- Executable metadata reported PeopleLens 1.0.0 and TantraYantra.
+- Executable metadata reported DrishtiX 1.1.0 and TantraYantra.
 
 ## Manual release checks
 
@@ -154,7 +154,7 @@ Perform these on a clean Windows 11 x64 account or machine before publishing:
 - [ ] Exercise Favorites, Archive, Trash, and restore from Trash.
 - [ ] Confirm Smart Search and Scan History behave correctly.
 - [ ] Confirm data remains under
-      `%LOCALAPPDATA%\TantraYantra\PeopleLens`.
+      `%LOCALAPPDATA%\TantraYantra\DrishtiX`.
 - [ ] Confirm no console window appears and errors are understandable.
 - [ ] Check Windows SmartScreen behavior; the executable is not code-signed.
 
@@ -185,7 +185,7 @@ app launches and face recognition works before publishing.
 
 ### The app opens but no photos appear
 
-Check `%LOCALAPPDATA%\TantraYantra\PeopleLens\peoplelens.log`. Use
+Check `%LOCALAPPDATA%\TantraYantra\DrishtiX\drishtix.log`. Use
 **Settings → Check database** for an integrity report. Do not delete the
 database while diagnosing; back up the whole user-data folder first.
 
@@ -199,7 +199,7 @@ public distribution.
 The release ZIP should contain only:
 
 ```text
-PeopleLens.exe
+DrishtiX.exe
 _internal\...
 ```
 
@@ -219,7 +219,7 @@ Use the following to inspect the archive:
 ```powershell
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $zip = [System.IO.Compression.ZipFile]::OpenRead(
-    (Resolve-Path 'release\PeopleLens-1.0.0-windows11-x64.zip')
+    (Resolve-Path 'release\DrishtiX-1.1.0-windows11-x64.zip')
 )
 $zip.Entries | Select-Object FullName, Length
 $zip.Dispose()

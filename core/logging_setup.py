@@ -1,7 +1,7 @@
-"""Logging setup for the windowed PeopleLens application.
+"""Logging setup for the windowed DrishtiX application.
 
 A PyInstaller ``console=False`` build has nowhere to print tracebacks, so every
-important error is written to ``%LOCALAPPDATA%\\TantraYantra\\PeopleLens\\peoplelens.log``.
+important error is written to ``%LOCALAPPDATA%\\TantraYantra\\DrishtiX\\drishtix.log``.
 """
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ _CONFIGURED = False
 
 def configure_logging(level: int = logging.INFO) -> logging.Logger:
     global _CONFIGURED
-    logger = logging.getLogger("peoplelens")
+    logger = logging.getLogger("drishtix")
     if _CONFIGURED:
         return logger
     _CONFIGURED = True

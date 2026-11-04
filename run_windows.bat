@@ -12,6 +12,6 @@ goto :eof
 
 :error
 echo.
-echo PeopleLens could not start. Review the error above.
+echo DrishtiX could not start. Review the error above.
 pause
 exit /b 1

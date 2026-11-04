@@ -1,4 +1,4 @@
-"""SQLite data access for PeopleLens.
+"""SQLite data access for DrishtiX.
 
 All modules share the same database path from :mod:`app_paths`. The schema is
 created and migrated in place, with a safety backup before an upgrade. User
@@ -60,7 +60,7 @@ def _backup_database() -> Path | None:
         return None
     BACKUPS_DIR.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    destination = BACKUPS_DIR / f"peoplelens-{stamp}.db"
+    destination = BACKUPS_DIR / f"drishtix-{stamp}.db"
     try:
         source = sqlite3.connect(str(path), timeout=15)
         target = sqlite3.connect(str(destination))
@@ -70,7 +70,7 @@ def _backup_database() -> Path | None:
             target.close()
             source.close()
         backups = sorted(
-            (item for item in BACKUPS_DIR.glob("peoplelens-*.db") if item.is_file()),
+            (item for item in BACKUPS_DIR.glob("drishtix-*.db") if item.is_file()),
             key=lambda item: item.stat().st_mtime,
             reverse=True,
         )
@@ -101,7 +101,7 @@ def init_db() -> None:
             with connect() as probe:
                 version = _database_version(probe)
         except sqlite3.DatabaseError:
-            logger.exception("Could not read the existing PeopleLens database")
+            logger.exception("Could not read the existing DrishtiX database")
             raise
     if existing and version < SCHEMA_VERSION:
         backup = _backup_database()
@@ -198,7 +198,7 @@ def init_db() -> None:
             """
         )
         con.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
-        logger.info("PeopleLens database ready at %s", DB_PATH)
+        logger.info("DrishtiX database ready at %s", DB_PATH)
 
 
 def database_info(check_integrity: bool = False) -> dict[str, Any]:
@@ -267,7 +267,7 @@ def restore_photo(photo_id: int) -> None:
 
 
 def permanently_delete_photo(photo_id: int) -> None:
-    """Remove a record from the PeopleLens index. The original file is untouched."""
+    """Remove a record from the DrishtiX index. The original file is untouched."""
     with connect() as con:
         con.execute("DELETE FROM photos WHERE id=?", (photo_id,))
 

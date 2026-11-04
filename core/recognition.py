@@ -14,9 +14,9 @@ from pathlib import Path
 # environment variable during initialization.
 _local_app_data = os.environ.get("LOCALAPPDATA")
 if _local_app_data:
-    _model_cache = Path(_local_app_data) / "TantraYantra" / "PeopleLens" / "models"
+    _model_cache = Path(_local_app_data) / "TantraYantra" / "DrishtiX" / "models"
 else:
-    _model_cache = Path.home() / ".local" / "share" / "TantraYantra" / "PeopleLens" / "models"
+    _model_cache = Path.home() / ".local" / "share" / "TantraYantra" / "DrishtiX" / "models"
 _model_cache.mkdir(parents=True, exist_ok=True)
 os.environ["UNIFACE_CACHE_DIR"] = str(_model_cache)
 

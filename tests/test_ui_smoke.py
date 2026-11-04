@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-TEMP_ROOT = Path(tempfile.mkdtemp(prefix="peoplelens-ui-"))
+TEMP_ROOT = Path(tempfile.mkdtemp(prefix="drishtix-ui-"))
 os.environ["LOCALAPPDATA"] = str(TEMP_ROOT)
 
 import numpy as np  # noqa: E402
@@ -136,7 +136,7 @@ def main() -> None:
 
     app = None
     try:
-        app = ui_app.PeopleLensApp()
+        app = ui_app.DrishtiXApp()
         app.withdraw()
         app.update()
 
@@ -239,7 +239,7 @@ def main() -> None:
         assert app._current_page == "Album", app._current_page
 
         assert not errors, "Tk callback errors:\n" + "\n".join(errors)
-        print("PeopleLens UI smoke tests passed.")
+        print("DrishtiX UI smoke tests passed.")
     finally:
         messagebox.showerror = original_showerror
         messagebox.showinfo = original_showinfo

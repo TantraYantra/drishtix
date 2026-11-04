@@ -1,5 +1,5 @@
 # PyInstaller onedir build for Windows 11 x64. Run from this directory:
-#   pyinstaller --noconfirm --clean PeopleLens.spec
+#   pyinstaller --noconfirm --clean DrishtiX.spec
 from PyInstaller.utils.hooks import collect_all, collect_submodules
 
 datas = []
@@ -21,7 +21,7 @@ a = Analysis(
     ["main.py"],
     pathex=["."],
     binaries=binaries,
-    datas=datas + [("assets", "assets"), ("VERSION", ".")],
+    datas=datas + [("assets", "assets"), ("VERSION", "."), ("NOTICE", "."), ("LICENSE", ".")],
     hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},
@@ -32,13 +32,13 @@ a = Analysis(
 )
 pyz = PYZ(a.pure)
 exe = EXE(
-    pyz, a.scripts, [], exclude_binaries=True, name="PeopleLens",
+    pyz, a.scripts, [], exclude_binaries=True, name="DrishtiX",
     debug=False, bootloader_ignore_signals=False, strip=False,
     upx=False, console=False, disable_windowed_traceback=False,
-    icon="assets/peoplelens_logo.ico",
+    icon="assets/drishtix_logo.ico",
     version="version_info.txt",
 )
 coll = COLLECT(
     exe, a.binaries, a.datas, strip=False, upx=False,
-    name="PeopleLens",
+    name="DrishtiX",
 )

@@ -1,4 +1,4 @@
-"""Visual language for PeopleLens.
+"""Visual language for DrishtiX.
 
 The palette is deliberately restrained: near-black navy surfaces, thin cool
 borders, and cyan/violet accents used only for orientation and action.

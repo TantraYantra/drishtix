@@ -1,8 +1,29 @@
 # Changelog
 
-All notable changes to PeopleLens are recorded here. The format follows
+All notable changes to DrishtiX are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 semantic versioning.
+
+## [1.1.0] - 2026-11-04
+
+### Changed
+
+- Renamed the product from PeopleLens to **DrishtiX**. The old name is used by
+  an unrelated commercial product and by a Microsoft Research project, so the
+  change avoids confusion in search results and in the marketplace.
+- On first launch the existing library is copied from
+  `%LOCALAPPDATA%\TantraYantra\PeopleLens` into
+  `%LOCALAPPDATA%\TantraYantra\DrishtiX`. The old folder is never modified or
+  deleted, so the original library remains intact as a backup.
+- The installer, executable, Start Menu entry, shortcuts, and download asset are
+  now `DrishtiX` and `DrishtiX-Setup.exe`.
+- `NOTICE` now names the copyright holders and states the MIT licence for both
+  model weight sets, as the MIT licence requires.
+
+### Fixed
+
+- The installer no longer reuses the previous install directory, so upgrading
+  from 1.0.0 does not install DrishtiX inside the old PeopleLens folder.
 
 ## [1.0.0] - 2026-11-03
 
@@ -35,7 +56,7 @@ First public release.
 
 - No telemetry, no cloud sync, and no photo uploads. The only network request
   is the model download.
-- User data stays under `%LOCALAPPDATA%\TantraYantra\PeopleLens` and is not
+- User data stays under `%LOCALAPPDATA%\TantraYantra\DrishtiX` and is not
   removed by uninstalling the app.
 
 ### Known limitations

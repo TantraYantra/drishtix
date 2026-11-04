@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Report a problem with PeopleLens
+about: Report a problem with DrishtiX
 title: "[Bug] "
 labels: bug
 assignees: ""
@@ -10,7 +10,7 @@ assignees: ""
 
 - This is a public issue. Remove personal photo paths, names, and any file
   contents from screenshots and logs.
-- Do not attach your `peoplelens.db`, `settings.json`, or real photos.
+- Do not attach your `drishtix.db`, `settings.json`, or real photos.
 - A security problem should be reported privately. See `SECURITY.md`.
 
 ## What happened
@@ -29,7 +29,7 @@ What you expected to happen.
 
 ## Environment
 
-- PeopleLens version (Settings -> About):
+- DrishtiX version (Settings -> About):
 - Windows version (e.g. Windows 11 23H2):
 - Installer or source run:
 - CPU (optional):
@@ -37,7 +37,7 @@ What you expected to happen.
 ## Log excerpt
 
 Relevant lines from
-`%LOCALAPPDATA%\TantraYantra\PeopleLens\peoplelens.log`, with personal paths
+`%LOCALAPPDATA%\TantraYantra\DrishtiX\drishtix.log`, with personal paths
 removed.
 
 ```text

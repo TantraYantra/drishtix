@@ -1,4 +1,4 @@
-# Contributing to PeopleLens
+# Contributing to DrishtiX
 
 Thanks for taking a look. Bug reports, reproduction logs, and focused pull
 requests are all welcome.
@@ -31,7 +31,7 @@ python tests\test_ui_smoke.py
 ```
 
 The tests point the data layer at temporary folders and never touch
-`%LOCALAPPDATA%\TantraYantra\PeopleLens`.
+`%LOCALAPPDATA%\TantraYantra\DrishtiX`.
 
 ## Pull requests
 
