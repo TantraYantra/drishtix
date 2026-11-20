@@ -31,6 +31,7 @@ from app_paths import (
     load_settings,
     save_settings,
     windows_prefers_light_theme,
+    check_for_update,
 )
 from core.matching import match_person_across_library
 from core.scanner import reindex_existing, scan_folder
@@ -197,6 +198,9 @@ class DrishtiXApp(tk.Tk):
         self._debounce_jobs: dict[str, str] = {}
         self._showing_error = False
         self._viewer_windows: list[tk.Toplevel] = []
+        self._toast_label: tk.Label | None = None
+        self._toast_after_id: str | None = None
+        self._undo_photo: dict[str, Any] | None = None
 
         self._build_shell()
         self.protocol("WM_DELETE_WINDOW", self._on_close)
@@ -460,7 +464,7 @@ class DrishtiXApp(tk.Tk):
         self.top_status.pack(side="right")
         make_button(
             actions,
-            "Search",
+            "Search  (Ctrl+F)",
             self.show_smart_search,
             self.theme,
             self.fonts,
@@ -470,7 +474,7 @@ class DrishtiXApp(tk.Tk):
         ).pack(side="right", padx=(0, 8))
         self.scan_button = make_button(
             actions,
-            "+  Scan folder",
+            "+  Scan folder  (Ctrl+O)",
             self.start_scan,
             self.theme,
             self.fonts,
@@ -768,6 +772,79 @@ class DrishtiXApp(tk.Tk):
             self.statusbar.configure(text=text, fg=colour or self.theme.dim)
         except tk.TclError:
             pass
+
+    def _show_toast(self, message: str, duration_ms: int = 5000,
+                    action_text: str | None = None,
+                    action_callback: Callable[[], None] | None = None) -> None:
+        """Show a temporary toast notification at the bottom of the content area."""
+        if self._toast_after_id is not None:
+            try:
+                self.after_cancel(self._toast_after_id)
+            except Exception:
+                pass
+        if self._toast_label is not None:
+            self._toast_label.destroy()
+        toast = tk.Frame(self.content, bg=self.theme.amber, highlightthickness=0)
+        toast.place(relx=0.5, rely=1.0, anchor="s", y=-10)
+        label = tk.Label(
+            toast, text=message, bg=self.theme.amber, fg="#0b1220",
+            font=self.fonts.text(9, "bold"), padx=14, pady=8,
+        )
+        label.pack(side="left")
+        if action_text and action_callback:
+            btn = tk.Button(
+                toast, text=action_text, bg=self.theme.bg, fg=self.theme.amber,
+                font=self.fonts.text(8, "bold"), borderwidth=0,
+                command=lambda: (action_callback(), self._hide_toast()),
+                cursor="hand2",
+            )
+            btn.pack(side="left", padx=(10, 0))
+        self._toast_label = toast
+        self._toast_after_id = self.after(duration_ms, self._hide_toast)
+
+    def _hide_toast(self) -> None:
+        if self._toast_label is not None:
+            try:
+                self._toast_label.destroy()
+            except tk.TclError:
+                pass
+            self._toast_label = None
+        if self._toast_after_id is not None:
+            try:
+                self.after_cancel(self._toast_after_id)
+            except Exception:
+                pass
+            self._toast_after_id = None
+
+    def _undo_delete(self) -> None:
+        """Restore the last deleted photo from the undo buffer."""
+        if self._undo_photo is None:
+            return
+        try:
+            db.add_photo(
+                self._undo_photo["path"],
+                self._undo_photo["file_hash"],
+                self._undo_photo.get("width"),
+                self._undo_photo.get("height"),
+                self._undo_photo.get("modified"),
+                self._undo_photo.get("media_type", "image"),
+                self._undo_photo.get("duration"),
+                self._undo_photo.get("thumbnail_path"),
+            )
+            if self._undo_photo.get("date_taken"):
+                db.set_photo_date(
+                    db.photo_by_path(self._undo_photo["path"])["id"],
+                    self._undo_photo["date_taken"],
+                )
+            self._undo_photo = None
+            self._hide_toast()
+            self._refresh_current_page()
+            messagebox.showinfo(
+                "Undo deleted", "The item has been restored to your library."
+            )
+        except Exception as exc:
+            logger.exception("Could not restore deleted photo")
+            messagebox.showerror("Undo failed", str(exc))
 
     def _refresh_current_page(self, scan_result: dict[str, Any] | None = None) -> None:
         page = self._current_page
@@ -1196,13 +1273,22 @@ class DrishtiXApp(tk.Tk):
             self.show_trash()
 
         def delete_item(photo_id: int):
+            photo = db.photo_by_id(photo_id)
+            if photo is None:
+                return
             if messagebox.askyesno(
                 "Delete from library",
                 "Remove this item from the DrishtiX library permanently?\n\n"
                 "The original file on disk will NOT be deleted.",
             ):
+                self._undo_photo = dict(photo)
                 db.permanently_delete_photo(photo_id)
-                self.show_trash()
+                self._show_toast(
+                    "Deleted from library",
+                    action_text="Undo",
+                    action_callback=self._undo_delete,
+                )
+                self._refresh_current_page()
 
         def refresh(*_args) -> None:
             for child in area.winfo_children():
@@ -2635,6 +2721,23 @@ class DrishtiXApp(tk.Tk):
             f"Integrity: {info['integrity']}",
         )
 
+    def _check_for_update(self) -> None:
+        update = check_for_update()
+        if update is None:
+            messagebox.showinfo(
+                "Check for updates",
+                "You are already running the latest version, or the update check "
+                "could not reach GitHub. Try again later.",
+            )
+            return
+        result = messagebox.askyesno(
+            "Update available",
+            f"DrishtiX {update['tag']} is available (you are running "
+            f"{self.version}).\n\n{update['name']}\n\nOpen the release page?",
+        )
+        if result:
+            webbrowser.open(update["url"])
+
     # ----------------------------------------------------------------- about
 
     def show_about(self) -> None:
@@ -2700,6 +2803,14 @@ class DrishtiXApp(tk.Tk):
             self.fonts,
             "ghost",
         ).pack(side="left", padx=(8, 0))
+        make_button(
+            links,
+            "Check for updates",
+            self._check_for_update,
+            self.theme,
+            self.fonts,
+            "ghost",
+        ).pack(side="left", padx=(8, 0))
 
         sections = [
             (
@@ -2758,7 +2869,13 @@ class DrishtiXApp(tk.Tk):
                 "Remove this record from the DrishtiX library? The original was not modified.",
             ):
                 if photo.get("id"):
+                    self._undo_photo = dict(photo)
                     db.permanently_delete_photo(int(photo["id"]))
+                    self._show_toast(
+                        "Deleted from library",
+                        action_text="Undo",
+                        action_callback=self._undo_delete,
+                    )
                     self._refresh_current_page()
             return
         window = tk.Toplevel(self)
@@ -3017,13 +3134,24 @@ class DrishtiXApp(tk.Tk):
         self._refresh_current_page()
 
     def _delete_index_from_viewer(self, photo_id: int, window: tk.Toplevel) -> None:
+        photo = db.photo_by_id(photo_id)
+        if photo is None:
+            window.destroy()
+            self._refresh_current_page()
+            return
         if messagebox.askyesno(
             "Delete from library",
             "Remove this item from the DrishtiX library permanently? "
             "The original file on disk will NOT be deleted.",
         ):
+            self._undo_photo = dict(photo)
             db.permanently_delete_photo(photo_id)
             window.destroy()
+            self._show_toast(
+                "Deleted from library",
+                action_text="Undo",
+                action_callback=self._undo_delete,
+            )
             self._refresh_current_page()
 
     def _reveal_file(self, path: Path) -> None:
