@@ -1052,8 +1052,7 @@ def smart_search(query: str) -> list[dict[str, Any]]:
     """Local metadata search using SQLite FTS5.
 
     Runs entirely on-device via full-text search over path, category,
-    date_taken, and media_type. Person names are joined separately and
-    filtered in memory only over the (already small) FTS candidate set.
+    date_taken, and media_type, plus person-name matching over faces/people.
     Never sends the query or library contents off-device.
     """
     q = (query or "").strip().lower()
@@ -1085,40 +1084,39 @@ def smart_search(query: str) -> list[dict[str, Any]]:
     if not terms and not date_filters:
         return all_photos()
 
-    # Build an FTS5 query from the remaining terms.
-    fts_terms = " AND ".join(f'"{term}*"' for term in terms)
-
     with connect() as con:
-        # First pass: FTS5 candidate set.
+        # --- FTS5 candidate set from all terms ---
+        fts_candidate_ids: set[int] = set()
+        fts_terms = " AND ".join(f'"{term}*"' for term in terms)
         fts_rows = con.execute(
             """
             SELECT DISTINCT rowid
             FROM photos_fts
             WHERE photos_fts MATCH ?
-            ORDER BY rowid
             """,
             (fts_terms,),
         ).fetchall()
-        candidate_ids = {row["rowid"] for row in fts_rows}
+        fts_candidate_ids = {row["rowid"] for row in fts_rows}
 
-        # Person name join (small in-memory filter over candidates only).
-        people_by_photo: dict[int, list[str]] = {}
-        for row in con.execute(
+        # --- Person-name candidate set: search people table for all terms ---
+        people_candidate_ids: set[int] = set()
+        people_rows = con.execute(
             """
-            SELECT f.photo_id, p.name
+            SELECT DISTINCT f.photo_id
             FROM faces f
             JOIN people p ON p.id = f.person_id
-            WHERE f.photo_id IN ({placeholders})
-            GROUP BY f.photo_id, p.name
-            """.format(placeholders=",".join("?" for _ in candidate_ids)) if candidate_ids else
-            "SELECT f.photo_id, p.name FROM faces f JOIN people p ON p.id = f.person_id WHERE 1=0",
-            list(candidate_ids) if candidate_ids else [],
-        ).fetchall():
-            people_by_photo.setdefault(row["photo_id"], []).append(row["name"])
+            WHERE lower(p.name) LIKE ?
+            """,
+            (f"%{terms[0]}%",),
+        ).fetchall() if terms else []
+        people_candidate_ids = {row["photo_id"] for row in people_rows}
 
-        # Fetch full photo rows for candidates.
+        # --- Combine candidates ---
+        candidate_ids = fts_candidate_ids | people_candidate_ids
         if not candidate_ids:
             return []
+
+        # Fetch full photo rows for combined candidates.
         placeholders = ",".join("?" for _ in candidate_ids)
         rows = con.execute(
             f"""
@@ -1131,6 +1129,21 @@ def smart_search(query: str) -> list[dict[str, Any]]:
             """,
             list(candidate_ids),
         ).fetchall()
+
+        # Load person names for candidate photos only.
+        people_by_photo: dict[int, list[str]] = {}
+        people_rows = con.execute(
+            f"""
+            SELECT f.photo_id, p.name
+            FROM faces f
+            JOIN people p ON p.id = f.person_id
+            WHERE f.photo_id IN ({placeholders})
+            GROUP BY f.photo_id, p.name
+            """,
+            list(candidate_ids),
+        ).fetchall()
+        for row in people_rows:
+            people_by_photo.setdefault(row["photo_id"], []).append(row["name"])
 
         output: list[dict[str, Any]] = []
         for row in rows:
@@ -1150,10 +1163,9 @@ def smart_search(query: str) -> list[dict[str, Any]]:
                     ok = item.get("media_type") == "image"
                 elif term == "favorite":
                     ok = bool(item.get("is_favorite"))
-                elif term == "people":
+                elif term in ("people", "person", "persons"):
                     ok = bool(people) or "people" in (item.get("category") or "").lower()
                 else:
-                    # Term already matched via FTS5, but re-check for safety.
                     haystack = " ".join(
                         [
                             item.get("path") or "",
