@@ -864,6 +864,13 @@ def populate_fts_for_existing() -> None:
 
 
 def history(limit: int = 100) -> list[dict[str, Any]]:
+    with connect() as con:
+        return [
+            dict(row)
+            for row in con.execute(
+                "SELECT * FROM scan_history ORDER BY id DESC LIMIT ?", (limit,)
+            ).fetchall()
+        ]
 
 
 def all_photos(
