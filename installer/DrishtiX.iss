@@ -152,7 +152,9 @@ begin
   DownloadPage := CreateDownloadPage(
     'Local AI models',
     'DrishtiX needs two face-recognition models (about 104 MB).' + #13#10 +
-    'They are downloaded once and stay on this PC. No photos are uploaded.',
+    'They are downloaded once and stay on this PC. No photos are uploaded.' + #13#10 +
+    'If the download is skipped here, DrishtiX will try again the first time ' +
+    'you use face recognition.',
     @OnDownloadProgress);
   DownloadPage.ShowBaseNameInsteadOfUrl := True;
 end;

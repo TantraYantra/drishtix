@@ -232,24 +232,25 @@ def scan_folder(
                 else:
                     db.set_photo_category(photo_id, classify_photo(path, width, height, 0))
                     found_faces = []
-                    if ai_enabled:
-                        try:
-                            found_faces = extract_faces(image_bgr)
-                            ai_tried = True
-                        except RuntimeError as exc:
-                            ai_tried = True
-                            ai_enabled = False
-                            ai_warning = (
-                                "Face recognition is unavailable for this scan. Your photos "
-                                "were still indexed. Details: " + str(exc)
-                            )
-                            logger.warning("[DrishtiX AI unavailable] %s", exc)
-                        except Exception as exc:
-                            ai_tried = True
-                            errors += 1
-                            logger.warning(
-                                "[DrishtiX face detection] %s: %s", path, exc, exc_info=True
-                            )
+                    # Attempt face detection on every file. A transient model
+                    # failure on one photo must never disable AI for the rest.
+                    try:
+                        found_faces = extract_faces(image_bgr)
+                        ai_tried = True
+                    except RuntimeError as exc:
+                        ai_tried = True
+                        ai_enabled = False
+                        ai_warning = (
+                            "Face recognition is unavailable for this scan. Your photos "
+                            "were still indexed. Details: " + str(exc)
+                        )
+                        logger.warning("[DrishtiX AI unavailable] %s", exc)
+                    except Exception as exc:
+                        ai_tried = True
+                        errors += 1
+                        logger.warning(
+                            "[DrishtiX face detection] %s: %s", path, exc, exc_info=True
+                        )
                     for box, embedding, det_score in found_faces:
                         try:
                             face_id = db.add_face(photo_id, embedding, box, det_score)
@@ -324,7 +325,11 @@ def reindex_existing(
     progress: Callable[[int, int, str, int, int, int, int], None] | None = None,
     should_cancel: Callable[[], bool] = lambda: False,
 ) -> dict[str, Any]:
-    """Rebuild face embeddings, preserving confirmed labels by box overlap."""
+    """Rebuild face embeddings, preserving confirmed labels by box overlap.
+
+    Videos are handled by extracting the first frame and running face detection
+    on it, so videos indexed before AI was available are not skipped.
+    """
     paths = db.all_photos(include_archived=True, include_deleted=True)
     total = max(1, len(paths))
     done = faces = errors = 0
@@ -337,6 +342,20 @@ def reindex_existing(
             break
         try:
             if row.get("media_type") == "video":
+                # Extract first frame for face detection on reindex.
+                try:
+                    capture = cv2.VideoCapture(str(row["path"]))
+                    ok, frame = capture.read()
+                    capture.release()
+                    if ok and frame is not None:
+                        found = extract_faces(frame)
+                    else:
+                        found = []
+                except Exception as exc:
+                    ai_enabled = False
+                    ai_warning = f"Face recognition is unavailable: {exc}"
+                    logger.warning("[DrishtiX reindex] AI unavailable: %s", exc)
+                    found = []
                 done += 1
                 if progress:
                     progress(index, total, row["path"], done, faces, 0, errors)

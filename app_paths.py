@@ -205,3 +205,54 @@ def human_bytes(size: float) -> str:
 
 def utc_stamp() -> str:
     return datetime.now().strftime("%Y%m%d-%H%M%S")
+
+
+def windows_prefers_light_theme() -> bool:
+    """Detect Windows light/dark mode from the registry.
+
+    Returns True when the system is configured for light apps, False for dark
+    or when the setting cannot be read.
+    """
+    if os.name != "nt":
+        return False
+    try:
+        import winreg
+
+        key = winreg.OpenKey(
+            winreg.HKEY_CURRENT_USER,
+            r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize",
+        )
+        value, _ = winreg.QueryValueEx(key, "AppsUseLightTheme")
+        winreg.CloseKey(key)
+        return bool(value)
+    except Exception:
+        return False
+
+
+def check_for_update() -> dict[str, str] | None:
+    """Check GitHub Releases for a newer version.
+
+    Returns a dict with "tag", "name", and "url" when an update is available,
+    or None when up to date or the check could not complete.
+    """
+    import json
+    import urllib.request
+
+    try:
+        req = urllib.request.Request(
+            "https://api.github.com/repos/TantraYantra/drishtix/releases/latest",
+            headers={"User-Agent": "DrishtiX/1.1.0 update-check"},
+        )
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        latest_tag = data.get("tag_name", "").lstrip("v")
+        current = APP_VERSION
+        if latest_tag and latest_tag != current:
+            return {
+                "tag": latest_tag,
+                "name": data.get("name", latest_tag),
+                "url": data.get("html_url", "https://github.com/TantraYantra/drishtix/releases"),
+            }
+    except Exception:
+        logger.debug("Update check failed", exc_info=True)
+    return None

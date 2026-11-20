@@ -49,7 +49,7 @@ def _load_splash_image(width: int) -> ImageTk.PhotoImage | None:
         return None
 
 
-def show_splash(duration_ms: int = 1450) -> None:
+def show_splash(duration_ms: int = 900) -> None:
     """Show the approved DrishtiX splash, centred and scaled to fit."""
     splash = tk.Tk()
     splash.overrideredirect(True)

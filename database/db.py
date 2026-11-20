@@ -197,7 +197,35 @@ def init_db() -> None:
             CREATE INDEX IF NOT EXISTS idx_photos_deleted ON photos(deleted_at);
             """
         )
+        # Full-text search virtual table for fast Smart Search queries.
+        con.executescript(
+            """
+            CREATE VIRTUAL TABLE IF NOT EXISTS photos_fts USING fts5(
+                path, category, date_taken, media_type, content=photos,
+                content_rowid=id, tokenize='unicode61'
+            );
+            CREATE TRIGGER IF NOT EXISTS photos_ai AFTER INSERT ON photos BEGIN
+                INSERT INTO photos_fts(rowid, path, category, date_taken, media_type)
+                VALUES (new.id, new.path, new.category, new.date_taken, new.media_type);
+            END;
+            CREATE TRIGGER IF NOT EXISTS photos_ad AFTER DELETE ON photos BEGIN
+                INSERT INTO photos_fts(photos_fts, rowid, path, category, date_taken, media_type)
+                VALUES ('delete', old.id, old.path, old.category, old.date_taken, old.media_type);
+            END;
+            CREATE TRIGGER IF NOT EXISTS photos_au AFTER UPDATE ON photos BEGIN
+                INSERT INTO photos_fts(photos_fts, rowid, path, category, date_taken, media_type)
+                VALUES ('delete', old.id, old.path, old.category, old.date_taken, old.media_type);
+                INSERT INTO photos_fts(rowid, path, category, date_taken, media_type)
+                VALUES (new.id, new.path, new.category, new.date_taken, new.media_type);
+            END;
+            """
+        )
         con.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
+        # Backfill FTS for photos indexed before this migration.
+        try:
+            populate_fts_for_existing()
+        except sqlite3.DatabaseError:
+            logger.warning("FTS backfill skipped", exc_info=True)
         logger.info("DrishtiX database ready at %s", DB_PATH)
 
 
@@ -788,14 +816,54 @@ def confirm_all_pending_candidates() -> tuple[int, int]:
     return len(confirm_ids), assigned
 
 
-def history(limit: int = 100) -> list[dict[str, Any]]:
+def purge_stale_thumbnails() -> int:
+    """Remove thumbnail cache files that no longer belong to any indexed photo.
+
+    Returns the number of files removed.
+    """
+    THUMBNAILS_DIR.mkdir(parents=True, exist_ok=True)
+    VIDEO_THUMBNAILS_DIR.mkdir(parents=True, exist_ok=True)
+
     with connect() as con:
-        return [
-            dict(row)
+        valid = {
+            row["thumbnail_path"]
             for row in con.execute(
-                "SELECT * FROM scan_history ORDER BY id DESC LIMIT ?", (limit,)
+                "SELECT thumbnail_path FROM photos WHERE thumbnail_path IS NOT NULL"
             ).fetchall()
-        ]
+            if row["thumbnail_path"]
+        }
+
+    removed = 0
+    for folder in (THUMBNAILS_DIR, VIDEO_THUMBNAILS_DIR):
+        for item in folder.iterdir():
+            if item.is_file() and str(item) not in valid:
+                try:
+                    item.unlink()
+                    removed += 1
+                except OSError:
+                    logger.warning("Could not remove stale thumbnail %s", item, exc_info=True)
+    return removed
+
+
+def populate_fts_for_existing() -> None:
+    """Backfill the FTS5 table for photos already indexed before FTS was added."""
+    with connect() as con:
+        existing = con.execute(
+            "SELECT COUNT(*) FROM photos_fts"
+        ).fetchone()[0]
+        if existing > 0:
+            return
+        con.executescript(
+            """
+            INSERT INTO photos_fts(rowid, path, category, date_taken, media_type)
+            SELECT id, path, COALESCE(category,'Unclassified'), date_taken, COALESCE(media_type,'image')
+            FROM photos;
+            """
+        )
+        logger.info("FTS5 table populated for existing photos")
+
+
+def history(limit: int = 100) -> list[dict[str, Any]]:
 
 
 def all_photos(
@@ -974,10 +1042,12 @@ def rename_album(album_id: int, name: str) -> None:
 
 
 def smart_search(query: str) -> list[dict[str, Any]]:
-    """Local metadata search across names, dates, categories and media type.
+    """Local metadata search using SQLite FTS5.
 
-    This deliberately does not claim visual/semantic scene understanding. It
-    never sends the query or library contents off-device.
+    Runs entirely on-device via full-text search over path, category,
+    date_taken, and media_type. Person names are joined separately and
+    filtered in memory only over the (already small) FTS candidate set.
+    Never sends the query or library contents off-device.
     """
     q = (query or "").strip().lower()
     if not q:
@@ -1008,44 +1078,63 @@ def smart_search(query: str) -> list[dict[str, Any]]:
     if not terms and not date_filters:
         return all_photos()
 
+    # Build an FTS5 query from the remaining terms.
+    fts_terms = " AND ".join(f'"{term}*"' for term in terms)
+
     with connect() as con:
-        rows = con.execute(
+        # First pass: FTS5 candidate set.
+        fts_rows = con.execute(
             """
-            SELECT DISTINCT ph.id,ph.path,ph.width,ph.height,
-                COALESCE(ph.category,'Unclassified') category,ph.date_taken,ph.scanned_at,
-                ph.is_favorite,ph.is_archived,ph.deleted_at,
-                COALESCE(ph.media_type,'image') media_type,ph.duration,ph.thumbnail_path
-            FROM photos ph
-            WHERE ph.deleted_at IS NULL AND ph.is_archived=0
-            ORDER BY COALESCE(ph.date_taken,ph.scanned_at) DESC
-            """
+            SELECT DISTINCT rowid
+            FROM photos_fts
+            WHERE photos_fts MATCH ?
+            ORDER BY rowid
+            """,
+            (fts_terms,),
         ).fetchall()
+        candidate_ids = {row["rowid"] for row in fts_rows}
+
+        # Person name join (small in-memory filter over candidates only).
         people_by_photo: dict[int, list[str]] = {}
         for row in con.execute(
             """
-            SELECT f.photo_id,p.name FROM faces f
-            JOIN people p ON p.id=f.person_id
-            GROUP BY f.photo_id,p.name
-            """
+            SELECT f.photo_id, p.name
+            FROM faces f
+            JOIN people p ON p.id = f.person_id
+            WHERE f.photo_id IN ({placeholders})
+            GROUP BY f.photo_id, p.name
+            """.format(placeholders=",".join("?" for _ in candidate_ids)) if candidate_ids else
+            "SELECT f.photo_id, p.name FROM faces f JOIN people p ON p.id = f.person_id WHERE 1=0",
+            list(candidate_ids) if candidate_ids else [],
         ).fetchall():
             people_by_photo.setdefault(row["photo_id"], []).append(row["name"])
+
+        # Fetch full photo rows for candidates.
+        if not candidate_ids:
+            return []
+        placeholders = ",".join("?" for _ in candidate_ids)
+        rows = con.execute(
+            f"""
+            SELECT id, path, width, height, COALESCE(category,'Unclassified') category,
+                   date_taken, scanned_at, is_favorite, is_archived, deleted_at,
+                   COALESCE(media_type,'image') media_type, duration, thumbnail_path
+            FROM photos
+            WHERE id IN ({placeholders})
+              AND deleted_at IS NULL AND is_archived=0
+            """,
+            list(candidate_ids),
+        ).fetchall()
 
         output: list[dict[str, Any]] = []
         for row in rows:
             item = dict(row)
             people = people_by_photo.get(item["id"], [])
             stamp = item.get("date_taken") or item.get("scanned_at") or ""
-            haystack = " ".join(
-                [
-                    item.get("path") or "",
-                    item.get("category") or "",
-                    stamp,
-                    item.get("media_type") or "",
-                ]
-                + people
-            ).lower()
+
+            # Date range filters.
             if any(not (start <= stamp[:10] < end) for start, end in date_filters):
                 continue
+
             matched = True
             for term in terms:
                 if term == "video":
@@ -1057,6 +1146,16 @@ def smart_search(query: str) -> list[dict[str, Any]]:
                 elif term == "people":
                     ok = bool(people) or "people" in (item.get("category") or "").lower()
                 else:
+                    # Term already matched via FTS5, but re-check for safety.
+                    haystack = " ".join(
+                        [
+                            item.get("path") or "",
+                            item.get("category") or "",
+                            stamp,
+                            item.get("media_type") or "",
+                        ]
+                        + people
+                    ).lower()
                     ok = term in haystack
                 if not ok:
                     matched = False

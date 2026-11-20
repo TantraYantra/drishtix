@@ -30,6 +30,7 @@ from app_paths import (
     human_bytes,
     load_settings,
     save_settings,
+    windows_prefers_light_theme,
 )
 from core.matching import match_person_across_library
 from core.scanner import reindex_existing, scan_folder
@@ -147,6 +148,9 @@ class DrishtiXApp(tk.Tk):
         ensure_user_data()
         self.logger = logger
         self.settings = load_settings()
+        # First launch: follow the Windows light/dark theme preference.
+        if "theme" not in self.settings:
+            self.settings["theme"] = "Light" if windows_prefers_light_theme() else "Dark"
         self.theme: Theme = get_theme(self.settings.get("theme", "Dark"))
         self.version = get_version()
         self.fonts = Fonts(self)
