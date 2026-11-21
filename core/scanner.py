@@ -235,6 +235,8 @@ def scan_folder(
                     # Attempt face detection on every file. A transient model
                     # failure on one photo must never disable AI for the rest.
                     try:
+                        if should_cancel():
+                            raise ScanCancelled()
                         found_faces = extract_faces(image_bgr)
                         ai_tried = True
                     except RuntimeError as exc:
@@ -252,6 +254,8 @@ def scan_folder(
                             "[DrishtiX face detection] %s: %s", path, exc, exc_info=True
                         )
                     for box, embedding, det_score in found_faces:
+                        if should_cancel():
+                            raise ScanCancelled()
                         try:
                             face_id = db.add_face(photo_id, embedding, box, det_score)
                             face_count += 1

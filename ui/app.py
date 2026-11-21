@@ -645,16 +645,23 @@ class DrishtiXApp(tk.Tk):
     def _poll_tasks(self) -> None:
         try:
             while True:
-                kind, event, payload = self._task_queue.get_nowait()
-                if event == "progress":
-                    self._on_task_progress(kind, payload)
-                elif event == "done":
-                    self._on_task_done(kind, payload)
-                elif event == "error":
-                    self._on_task_error(kind, payload)
-        except queue.Empty:
-            pass
-        self.after(80, self._poll_tasks)
+                try:
+                    kind, event, payload = self._task_queue.get_nowait()
+                except queue.Empty:
+                    break
+                try:
+                    if event == "progress":
+                        self._on_task_progress(kind, payload)
+                    elif event == "done":
+                        self._on_task_done(kind, payload)
+                    elif event == "error":
+                        self._on_task_error(kind, payload)
+                except Exception:
+                    logger.exception("Task event handler failed")
+        except Exception:
+            logger.exception("Task poll loop failed")
+        finally:
+            self.after(80, self._poll_tasks)
 
     def _begin_task(self, kind: str, title: str, worker: Callable) -> None:
         if self._task_active:
