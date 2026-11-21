@@ -493,6 +493,7 @@ class DrishtiXApp(tk.Tk):
             padx=12,
             pady=8,
         )
+        self.cancel_button.pack_forget()
 
         self.progress_wrap = tk.Frame(self.topbar, bg=self.theme.bg)
         self.progress = ttk.Progressbar(
@@ -703,12 +704,15 @@ class DrishtiXApp(tk.Tk):
 
     def _set_task_ui(self, active: bool, title: str = "") -> None:
         if active:
-            # Run scan in background silently — no visible progress or cancel UI.
+            # Run scan in background silently — scan button stays enabled,
+            # cancel button appears for those who want to stop.
             self._task_active = True
-            self.scan_button.configure(text="+  Scan folder", state="disabled")
+            self.scan_button.configure(text="+  Scan folder", state="normal")
+            self.cancel_button.pack(side="right", padx=(0, 8))
         else:
             self._task_active = False
             self.scan_button.configure(text="+  Scan folder", state="normal")
+            self.cancel_button.pack_forget()
 
     def _on_task_progress(self, kind: str, data: dict[str, Any]) -> None:
         # Silent background progress — no visible progress bar or status change.
