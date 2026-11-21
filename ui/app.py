@@ -671,8 +671,7 @@ class DrishtiXApp(tk.Tk):
         self._task_kind = kind
         self._cancel_requested = False
         self._set_task_ui(True, title)
-        self._set_status(title, self.theme.cyan)
-        self._set_top_status("●  WORKING", self.theme.cyan)
+        self._set_status(title, self.theme.muted)
 
         def progress_adapter(index, total, name, seen, faces, skipped, errors):
             self._task_queue.put(
@@ -704,33 +703,30 @@ class DrishtiXApp(tk.Tk):
 
     def _set_task_ui(self, active: bool, title: str = "") -> None:
         if active:
-            self.progress_wrap.pack(fill="x", pady=(12, 0))
-            self.progress.configure(maximum=100, value=0)
-            self.progress_label.configure(text=title)
-            self.cancel_button.pack(side="right", padx=(0, 8))
-            self.scan_button.configure(text="Working…", state="disabled")
+            # Run scan in background silently — no visible progress or cancel UI.
+            self._task_active = True
+            self.scan_button.configure(text="+  Scan folder", state="disabled")
         else:
-            self.progress_wrap.pack_forget()
-            self.cancel_button.pack_forget()
+            self._task_active = False
             self.scan_button.configure(text="+  Scan folder", state="normal")
 
     def _on_task_progress(self, kind: str, data: dict[str, Any]) -> None:
-        index = int(data.get("index") or 0)
-        total = int(data.get("total") or 1)
-        self.progress.configure(maximum=max(1, total), value=index)
-        self._set_top_status(f"●  {index:,} / {total:,}", self.theme.cyan)
-        message = (
-            f"{data.get('name','')}  ·  {data.get('seen',0)} indexed  ·  "
-            f"{data.get('faces',0)} faces  ·  {data.get('skipped',0)} duplicates  ·  "
-            f"{data.get('errors',0)} errors"
-        )
-        self.progress_label.configure(text=message)
+        # Silent background progress — no visible progress bar or status change.
+        # Only update the dashboard scan activity panel if it is open.
         if self._dashboard_scan_info is not None:
             try:
                 if self._dashboard_scan_info.winfo_exists():
+                    message = (
+                        f"{data.get('name','')}  ·  {data.get('seen',0)} indexed  ·  "
+                        f"{data.get('faces',0)} faces  ·  {data.get('skipped',0)} duplicates  ·  "
+                        f"{data.get('errors',0)} errors"
+                    )
                     self._dashboard_scan_info.configure(text=message)
                 if self._dashboard_scan_bar is not None and self._dashboard_scan_bar.winfo_exists():
-                    self._dashboard_scan_bar.configure(maximum=max(1, total), value=index)
+                    self._dashboard_scan_bar.configure(
+                        maximum=max(1, int(data.get("total") or 1)),
+                        value=int(data.get("index") or 0),
+                    )
             except tk.TclError:
                 pass
 
@@ -738,9 +734,7 @@ class DrishtiXApp(tk.Tk):
         self._task_active = False
         self._task_kind = None
         self._set_task_ui(False)
-        status = result.get("status", "completed")
-        self._set_top_status("●  READY", self.theme.green)
-        self._set_status(f"Task finished: {status}", self.theme.muted)
+        self._set_status("Ready", self.theme.muted)
         self._refresh_status_right()
         self._refresh_current_page(scan_result=result if kind == "scan" else None)
         if kind == "scan":
@@ -752,7 +746,6 @@ class DrishtiXApp(tk.Tk):
         self._task_active = False
         self._task_kind = None
         self._set_task_ui(False)
-        self._set_top_status("●  NEEDS ATTENTION", self.theme.red)
         self._set_status(f"Task failed: {exc}", self.theme.red)
         logger.exception("Task %s failed", kind)
         messagebox.showerror(
@@ -764,9 +757,6 @@ class DrishtiXApp(tk.Tk):
         if not self._task_active:
             return
         self._cancel_requested = True
-        self._set_status("Cancelling…", self.theme.amber)
-        self._set_top_status("●  CANCELLING", self.theme.amber)
-        self.cancel_button.configure(state="disabled")
 
     def _set_top_status(self, text: str, colour: str) -> None:
         try:
