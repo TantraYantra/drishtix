@@ -1084,39 +1084,57 @@ def smart_search(query: str) -> list[dict[str, Any]]:
     if not terms and not date_filters:
         return all_photos()
 
-    with connect() as con:
-        # --- FTS5 candidate set from all terms ---
-        fts_candidate_ids: set[int] = set()
-        fts_terms = " AND ".join(f'"{term}*"' for term in terms)
-        fts_rows = con.execute(
-            """
-            SELECT DISTINCT rowid
-            FROM photos_fts
-            WHERE photos_fts MATCH ?
-            """,
-            (fts_terms,),
-        ).fetchall()
-        fts_candidate_ids = {row["rowid"] for row in fts_rows}
+    # Separate boolean filter terms from FTS5 text terms.
+    filter_terms: set[str] = {
+        t for t in terms
+        if t in ("favorite", "video", "photo", "image", "people", "person", "persons")
+    }
+    text_terms: list[str] = [t for t in terms if t not in filter_terms]
 
-        # --- Person-name candidate set: search people table for all terms ---
+    with connect() as con:
+        # --- FTS5 candidate set from text terms ---
+        fts_candidate_ids: set[int] = set()
+        if text_terms:
+            fts_terms_str = " AND ".join(f'"{term}*"' for term in text_terms)
+            fts_rows = con.execute(
+                """
+                SELECT DISTINCT rowid
+                FROM photos_fts
+                WHERE photos_fts MATCH ?
+                """,
+                (fts_terms_str,),
+            ).fetchall()
+            fts_candidate_ids = {row["rowid"] for row in fts_rows}
+
+        # --- Person-name candidate set ---
         people_candidate_ids: set[int] = set()
-        people_rows = con.execute(
-            """
-            SELECT DISTINCT f.photo_id
-            FROM faces f
-            JOIN people p ON p.id = f.person_id
-            WHERE lower(p.name) LIKE ?
-            """,
-            (f"%{terms[0]}%",),
-        ).fetchall() if terms else []
-        people_candidate_ids = {row["photo_id"] for row in people_rows}
+        people_name_terms = [t for t in text_terms if t not in ("people", "person", "persons")]
+        if people_name_terms:
+            like_conditions = " OR ".join("lower(p.name) LIKE ?" for _ in people_name_terms)
+            people_rows = con.execute(
+                f"""
+                SELECT DISTINCT f.photo_id
+                FROM faces f
+                JOIN people p ON p.id = f.person_id
+                WHERE {like_conditions}
+                """,
+                [f"%{t}%" for t in people_name_terms],
+            ).fetchall()
+            people_candidate_ids = {row["photo_id"] for row in people_rows}
 
         # --- Combine candidates ---
         candidate_ids = fts_candidate_ids | people_candidate_ids
         if not candidate_ids:
-            return []
+            # No text matches at all; still apply filter terms against all photos
+            candidate_ids = set()
+            rows_all = con.execute(
+                """
+                SELECT id FROM photos
+                WHERE deleted_at IS NULL AND is_archived=0
+                """,
+            ).fetchall()
+            candidate_ids = {row["id"] for row in rows_all}
 
-        # Fetch full photo rows for combined candidates.
         placeholders = ",".join("?" for _ in candidate_ids)
         rows = con.execute(
             f"""
